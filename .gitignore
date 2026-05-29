@@ -1,0 +1,23 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Generated files
+*.srt
+temp_audio.wav
+
+# Test assets
+*.mp4
+*.mkv
+*.avi
+*.mov
+
+# Tooling
+.sisyphus/

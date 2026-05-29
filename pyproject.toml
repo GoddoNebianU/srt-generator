@@ -1,0 +1,11 @@
+[project]
+name = "srt-generator"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "funasr>=1.3.7",
+    "torch>=2.12.0",
+    "torchaudio>=2.11.0",
+]
