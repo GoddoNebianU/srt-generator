@@ -19,5 +19,8 @@ temp_audio.wav
 *.avi
 *.mov
 
+# Environment
+.env
+
 # Tooling
 .sisyphus/
