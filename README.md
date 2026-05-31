@@ -1,22 +1,36 @@
 # SRT Generator
 
-基于 [FunASR](https://github.com/modelscope/FunASR) 和 [SenseVoiceSmall](https://github.com/FunAudioLLM/SenseVoice) 的视频字幕生成工具。输入视频文件，自动输出带时间戳的 SRT 字幕。
+Video subtitle generator powered by [FunASR SenseVoiceSmall](https://github.com/FunAudioLLM/SenseVoice) and [DeepSeek](https://deepseek.com). Feed it a video file, get a timestamped SRT subtitle file.
 
-## 特性
+**[中文文档](README.zh-CN.md)**
 
-- 支持所有常见视频格式（mp4, mkv, avi, mov 等）
-- 52 种语言自动检测，也支持手动指定
-- 内置 VAD（语音活动检测），自动处理长视频
-- 词级时间戳，按标点和长度智能分句
+## Features
 
-## 环境要求
+- All common video formats (mp4, mkv, avi, mov, etc.)
+- Auto-detect across 52 languages, or specify manually
+- Built-in VAD (Voice Activity Detection) for long videos
+- Word-level timestamps + DeepSeek AI sentence segmentation
+
+## How It Works
+
+```
+Video → ffmpeg audio extraction → SenseVoiceSmall ASR (word-level timestamps)
+      → DeepSeek AI segmentation → timestamp matching → SRT file
+```
+
+1. **Audio extraction** — ffmpeg converts video to 16 kHz mono WAV
+2. **Speech recognition** — SenseVoiceSmall produces word-level transcript + timestamps
+3. **Smart segmentation** — DeepSeek splits text into subtitle segments by semantics and length (8–20 words each)
+4. **Timestamp matching** — segments are mapped back to original word-level timestamps, producing the final SRT
+
+## Prerequisites
 
 - Python >= 3.14
-- [uv](https://docs.astral.sh/uv/)（包管理）
-- ffmpeg（音频提取）
-- NVIDIA GPU + CUDA（推理）
+- [uv](https://docs.astral.sh/uv/) (package manager)
+- ffmpeg (audio extraction)
+- NVIDIA GPU + CUDA (model inference)
 
-## 安装
+## Installation
 
 ```bash
 git clone <repo-url>
@@ -24,33 +38,66 @@ cd srt-generator
 uv sync
 ```
 
-首次运行会自动从 ModelScope 下载模型（约 900MB）。
+The SenseVoiceSmall model (~900 MB) is downloaded automatically from ModelScope on first run.
 
-## 使用
+## Configuration
+
+Create a `.env` file in the project root:
+
+```
+DEEPSEEK_API_KEY=your_api_key_here
+```
+
+The DeepSeek API key is required for AI-powered sentence segmentation. Get one at [DeepSeek Platform](https://platform.deepseek.com/).
+
+## Usage
 
 ```bash
-# 基本用法（自动检测语言）
+# Basic (auto-detect language)
 uv run python main.py video.mp4
 
-# 指定语言
+# Specify language
 uv run python main.py video.mp4 en
 
-# 指定输出路径
+# Specify output path
 uv run python main.py video.mp4 auto output.srt
 ```
 
-语言参数可选：`auto`（默认）、`zh`、`en`、`ja`、`ko` 等。
+**Arguments**: `python main.py <video_path> [language] [output.srt]`
 
-## 依赖
+| Argument | Default | Description |
+|---|---|---|
+| `video_path` | — | Path to input video |
+| `language` | `auto` | Language code: `auto`, `zh`, `en`, `ja`, `ko`, etc. |
+| `output.srt` | Same name as video with `.srt` | Output subtitle path |
 
-| 依赖 | 用途 |
+## Project Structure
+
+```
+srt-generator/
+├── main.py              # Entry point: extract audio → ASR → segment → write SRT
+├── audio.py             # ffmpeg audio extraction
+├── srt.py               # SRT formatting and file writing
+├── splitter/
+│   ├── __init__.py      # Pipeline: merge contractions → build text → AI split → match timestamps
+│   ├── preprocess.py    # ASR word merging (contraction handling) and char-position mapping
+│   ├── prompt.py        # DeepSeek segmentation system prompt
+│   └── client.py        # DeepSeek API client
+├── pyproject.toml
+└── .env                 # API key (not tracked in git)
+```
+
+## Dependencies
+
+| Dependency | Purpose |
 |---|---|
-| funasr | 语音识别框架 |
-| torch | 模型推理 |
-| torchaudio | 音频处理 |
-| ffmpeg | 视频音频分离 |
+| funasr | Speech recognition framework (Alibaba DAMO Academy) |
+| torch | Model inference backend |
+| torchaudio | Audio processing |
+| openai | DeepSeek API client (OpenAI-compatible SDK) |
+| python-dotenv | Environment variable loading |
+| ffmpeg (system) | Video-to-audio extraction |
 
-## 致谢
+## License
 
-- [FunASR](https://github.com/modelscope/FunASR) — 阿里达摩院语音识别框架
-- [SenseVoice](https://github.com/FunAudioLLM/SenseVoice) — 通义实验室语音模型
+[GPL-3.0](LICENSE)
